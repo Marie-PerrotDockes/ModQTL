@@ -7,18 +7,14 @@
 get_group_both(X, sep = "\\\\.", r)
 }
 \arguments{
-\item{response}{a vector response variable}
+\item{X}{a matrix with colnames indicating group vaiables}
 
-\item{regressors}{a quantitative matrix of regressor}
+\item{sep}{the separators between the group (for exemlpe the marker) and the specificity of the columns (for exemple the allele)}
 
-\item{group}{a vector with two levels. (The group of the ANCOVA)}
-
-\item{a}{the parameters that indicate how much the coefficients will be fused}
-
-\item{lambda}{if the user wants to use it owns values of lambdas}
+\item{r}{the number of Trait}
 }
 \value{
-The coefficients of the fused lasso ANCOVA for the different value of lambda
+The group for r Trait if the columns have to be group if they have the same Marker, it is the same group for all Trait
 }
 \description{
 Description of the function

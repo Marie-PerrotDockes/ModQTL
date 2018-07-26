@@ -16,7 +16,7 @@
 #'mod <- fl2(y, regressors, group)
 #'colors <- c(rep("grey",2), rep('green',2),rep('black', 6), rep(c("orange","blue"), 2), 'darkgreen', rep('yellow',3), rep('purple',2))
 #'matplot(mod$lambda ,t(mod$beta),type='l',col=colors)
-#'@import R6 Matrix gglasso tidyverse glmnet stabs magrittr gganimate viridis
+#' @import R6 Matrix gglasso tidyverse glmnet stabs magrittr viridis stringr
 #' @export
 QTLmod <- R6Class("QTLmod",
                   private = list(
@@ -25,17 +25,42 @@ QTLmod <- R6Class("QTLmod",
                     intercept= NULL,
                     r= NULL,
                     Data = NULL,
-                     tresh = NULL),
+                    tresh = NULL,
+                    df = NULL,
+                    s= NULL,
+                    n =NULL),
                   public = list(
                     res = NULL,
                     pe = NULL,
                     mod = NULL,
+                    cv = NULL,
+                    stab = NULL,
                     initialize = function(x, y){
                       private$x <- as.matrix(x)
                       private$y <- as.data.frame(y)
                       if(nrow(private$x) != nrow(private$y)) stop("X and Y must have the same number of rows!")
                       private$r <- ncol(private$y)
+                      private$n <- nrow(private$x)
                     },
+
+
+                    predict = function(){
+                      if(is.null(self$mod))
+                        self$estime()
+                      # if(is.null(private$df))
+                      #   self$get_df()
+                      self $res <- self$res %>%
+                        mutate(Yhat = map2(Beta, Intercept, ~ cbind(1,private$x) %*%
+                                             rbind(.y,as.matrix(.x)))) %>%
+                        mutate(Ehat = map2(Data, Yhat, ~.x - .y)) %>%
+                        mutate(Ehat = map(Ehat, ~as.data.frame(.))) %>%
+                        mutate(MSE = map(Ehat, ~summarise_all(.,~sum(.^2)))) %>%
+                        mutate(DF = private$df) %>%
+                        mutate( BIC = map2(MSE, DF,~ private$n*log(.x / private$n) + log(private$n) * .y))
+                    },
+
+
+
                     plot_error = function(print = TRUE){
                       if(is.null(self$res$MSE))
                         self$predict()
@@ -51,6 +76,24 @@ QTLmod <- R6Class("QTLmod",
                        theme_bw()
 
                      pe
+
+                    },
+                    plot_BIC = function(print = TRUE){
+                      if(is.null(self$res$BIC))
+                        self$predict()
+
+                     BIC <- self$res$BIC %>%
+                        map_dfc(function(x) x %>% t() %>%  as.data.frame()) %>%
+                        set_names(colnames(private$y)) %>%
+                        rowid_to_column() %>%
+                        gather(key, value,-rowid)
+
+                      pe <- ggplot(data = BIC, aes (x = rowid, color = key, y = value )) +
+                        geom_point() +
+                        geom_line()+
+                        theme_bw()
+
+                      pe
 
                     },
                     plot_coef = function(tresh, sel = colnames(private$y)){
@@ -88,27 +131,13 @@ QTLmod <- R6Class("QTLmod",
                     },
                     plot_anime = function(){
 
-                    },
+                    }
                     # estime = function(){
                     #   self$res <- self$mod  %>%
                     #     mutate( Beta = map(Model, ~.$beta)) %>%
                     #     select(-Model)
                     # },
-                    predict = function(){
-                         if(is.null(self$mod))
-                     self$estime()
-                      self $res <- self$res %>%
-                        mutate(Yhat = map2(Beta, Intercept, ~ cbind(1,private$x) %*%
-                                             rbind(.y,as.matrix(.x)))) %>%
-                        mutate(Ehat = map2(Data, Yhat, ~.x - .y)) %>%
-                        mutate(Ehat = map(Ehat, ~as.data.frame(.))) %>%
-                        mutate(MSE = map(Ehat, ~summarise_all(.,~sum(.^2)))) %>%
-                        mutate(DF = map(Beta, function(x){
-                          x %>% as.matrix() %>%
-                            as.data.frame() %>%
-                            summarise_all(~sum(.!=0))
-                        }))
-                    }
+
                   )
 )
 

@@ -29,10 +29,10 @@ shinyUI(fluidPage(
                                                      Trait =" trait",
                                                      Marker ="marker"
                                                      )),
-      sliderInput("bins",
-                  "Number of bins:",
+      sliderInput("tresh",
+                  "Index of the threshold in the stability path",
                   min = 1,
-                  max = 50,
+                  max = 100,
                   value = 30),
       selectInput("color", "Histogramme color", 
                   choices= c(Red ="red", Orange = "orange", Blue = "blue")),

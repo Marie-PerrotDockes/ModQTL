@@ -2,17 +2,20 @@
 % Please edit documentation in R/grp_lasso.R
 \name{grpLassoQTL}
 \alias{grpLassoQTL}
-\title{Description of the function}
+\title{Give the result for a group lasso}
 \usage{
-grpLassoQTL(X, Y, marker, map, PFER = 1, B = 500, cutoff = 0.85,
-  plot = TRUE, nb.cores, sep = "\\\\.", mrk2lg, type_group = "both")
+grpLassoQTL(X, Y, marker, map, PFER = 1, B = 500, cutoff = 0.85, nb.cores,
+  sep = "\\\\.", mrk2lg, type_group = "both")
 }
 \arguments{
-\item{response}{a vector response variable}
+\item{X}{a matrix with the value of different allele for different Marker}
 
-\item{regressors}{a quantitative matrix of regressor}
+\item{Y}{a vector or a matrix with the values of different Trait}
 
-\item{group}{a vector with two levels. (The group of the ANCOVA)}
+\item{type_group}{a character indicating the way of creating the group :
+"both" means that the variable are selected for all a Marker for all the Trait.
+"marker" means that the variable are selected for a Marker but for one Trait.
+"trait" means that a variable are selected for all the Trait but not for all the marker but just for one allele}
 
 \item{a}{the parameters that indicate how much the coefficients will be fused}
 
@@ -22,7 +25,7 @@ grpLassoQTL(X, Y, marker, map, PFER = 1, B = 500, cutoff = 0.85,
 The coefficients of the fused lasso ANCOVA for the different value of lambda
 }
 \description{
-Description of the function
+Give the result for a group lasso
 }
 \examples{
 B <- c(1, -1, 1.5, 1.5, rep(0, 6), 2, 0, 2, 0)

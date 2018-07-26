@@ -32,6 +32,36 @@ trans_beta <- function(beta, name){
 }
 
 
+
+#' Description of the function
+#'
+#' @param  response a vector response variable
+#' @param  regressors a quantitative matrix of regressor
+#' @param  group a vector with two levels. (The group of the ANCOVA)
+#' @param  a the parameters that indicate how much the coefficients will be fused
+#' @param  lambda if the user wants to use it owns values of lambdas
+#' @return The coefficients of the fused lasso ANCOVA for the different value of lambda
+#' @examples
+#' B <- c(1, -1, 1.5, 1.5, rep(0, 6), 2, 0, 2, 0)
+#'group <- c(rep('M1', 10), rep('M2', 10))
+#'regressors <- matrix(rnorm(6*20), ncol = 6)
+#'X  <- model.matrix(~group + group:regressors - 1)
+#'y <- X%*%B + rnorm(20)
+#'y <- scale(y)
+#'mod <- fl2(y, regressors, group)
+#'colors <- c(rep("grey",2), rep('green',2),rep('black', 6), rep(c("orange","blue"), 2), 'darkgreen', rep('yellow',3), rep('purple',2))
+#'matplot(mod$lambda ,t(mod$beta),type='l',col=colors)
+#' @export
+ord_beta <- function(beta, name){
+  beta %>% as.data.frame() %>%
+    rownames_to_column() %>%
+    separate(rowname, c("Trait", "Marker"), "_", extra ="merge") %>%
+    mutate(ord = match(Marker,name)) %>% arrange(ord) %>%
+    select(-Trait, -Marker, -ord)
+}
+
+
+
 #' Description of the function
 #'
 #' @param  response a vector response variable
@@ -91,5 +121,12 @@ FPR <- function(b_hat, b){
   FN <- sum(b_hat != 0 & b == 0)
   N  <- sum(b ==0)
   FN / N
+}
+
+
+#' @export
+sel_ols <- function(b,y,x){
+
+
 }
 

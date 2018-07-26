@@ -1,18 +1,4 @@
 #' Description of the function
-#' This function indicate the group among the collumn of a matrix.
-#' @param  X a matrix with colnames indicating group variables
-#' @param  sep the separators between the group (for exemlpe the marker) and the specificity of the columns (for exemple the allele)
-#' @examples
-#' B <- c(1, -1, 1.5, 1.5, rep(0, 6), 2, 0, 2, 0)
-#'group <- c(rep('M1', 10), rep('M2', 10))
-#'regressors <- matrix(rnorm(6*20), ncol = 6)
-#'X  <- model.matrix(~group + group:regressors - 1)
-#'y <- X%*%B + rnorm(20)
-#'y <- scale(y)
-#'mod <- fl2(y, regressors, group)
-#'colors <- c(rep("grey",2), rep('green',2),rep('black', 6), rep(c("orange","blue"), 2), 'darkgreen', rep('yellow',3), rep('purple',2))
-#'matplot(mod$lambda ,t(mod$beta),type='l',col=colors)
-#' @import tidyverse glmnet R6 stabs Matrix gglasso
 #' @export
 get_group <-function(X, sep = "\\."){
   group <- X %>%
@@ -24,21 +10,6 @@ get_group <-function(X, sep = "\\."){
 }
 
 #' This function give the group for r Traits if the group are just among the Marker and not among the Trait
-#'
-#' @param  X a matrix with colnames indicating group vaiables
-#' @param  sep the separators between the group (for exemlpe the marker) and the specificity of the columns (for exemple the allele)
-#' @param  r the number of Trait
-#' @return The group for r Trait if the columns have to be group if they have the same marker and the same Trait
-#' @examples
-#' B <- c(1, -1, 1.5, 1.5, rep(0, 6), 2, 0, 2, 0)
-#'group <- c(rep('M1', 10), rep('M2', 10))
-#'regressors <- matrix(rnorm(6*20), ncol = 6)
-#'X  <- model.matrix(~group + group:regressors - 1)
-#'y <- X%*%B + rnorm(20)
-#'y <- scale(y)
-#'mod <- fl2(y, regressors, group)
-#'colors <- c(rep("grey",2), rep('green',2),rep('black', 6), rep(c("orange","blue"), 2), 'darkgreen', rep('yellow',3), rep('purple',2))
-#'matplot(mod$lambda ,t(mod$beta),type='l',col=colors)
 #' @export
 get_group_marker <- function(X, sep = "\\.", r){
   group <- get_group(X, sep)
@@ -67,21 +38,6 @@ get_group_both <-function(X, sep = "\\.", r){
   rep(get_group(X, sep), r)
 }
 #' Description of the function
-#'
-#' @param  X a matrix with different Marker and different allele
-#' @param  Y a matrix or a vector with one or several Trait
-#' @param  group a vector indicating which columns are togetrher ( of length (number of columns of Y * number of columns of X))
-#' @return The coefficients of the fused lasso ANCOVA for the different value of lambda
-#' @examples
-#' B <- c(1, -1, 1.5, 1.5, rep(0, 6), 2, 0, 2, 0)
-#'group <- c(rep('M1', 10), rep('M2', 10))
-#'regressors <- matrix(rnorm(6*20), ncol = 6)
-#'X  <- model.matrix(~group + group:regressors - 1)
-#'y <- X%*%B + rnorm(20)
-#'y <- scale(y)
-#'mod <- fl2(y, regressors, group)
-#'colors <- c(rep("grey",2), rep('green',2),rep('black', 6), rep(c("orange","blue"), 2), 'darkgreen', rep('yellow',3), rep('purple',2))
-#'matplot(mod$lambda ,t(mod$beta),type='l',col=colors)
 #' @export
 grp_lasso <- function(X,Y, group){
   Y <- as.matrix(Y)
@@ -94,6 +50,22 @@ grp_lasso <- function(X,Y, group){
   colnames(X_ord) <- paste(Eg[,2],Eg[,1], sep ="_")[ord]
   y <- as.numeric(as.matrix(Y))
   mod <- gglasso(x = X_ord, y = y, group = group)
+  mod
+}
+
+#' Description of the function
+#' @export
+cv_grp_lasso <- function(X,Y, group){
+  Y <- as.matrix(Y)
+  r <- ncol(Y)
+  if(is.null(colnames(Y))) colnames(Y) <- 1:r
+  ord <- order(group)
+  group_ord <- group[ord]
+  X_ord <- as.matrix(bdiag(rep(list(X),r))[, ord])
+  Eg <- expand.grid(colnames(X), colnames(Y))
+  colnames(X_ord) <- paste(Eg[,2],Eg[,1], sep ="_")[ord]
+  y <- as.numeric(as.matrix(Y))
+  mod <- cv.gglasso(x = X_ord, y = y, group = group)
   mod
 }
 
