@@ -41,7 +41,7 @@ QTLmod_lasso_adaptive <- R6Class("QTLmod_lasso",
                           },
 
                           sel_cv = function(s = "lambda.min"){
-                            if(is.null(private$cv) || (s != private$s)){
+                            if(is.null(self$cv) || (s != private$s)){
 
                               private$s <- s
                               self$cv <- private$y %>%

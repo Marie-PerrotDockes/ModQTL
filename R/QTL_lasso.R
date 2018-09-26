@@ -44,13 +44,13 @@ QTLmod_lasso <- R6Class("QTLmod_lasso",
                                                           ~ cv.glmnet(private$x, .)))
 
                             }
-
                            self$cv <- self$cv %>%
-                             mutate(Beta = map(Model, ~coef(.,"lambda.min")[-1])) %>%
+                             mutate(Beta = map(Model, ~coef(.,private$s)[-1])) %>%
                               select(Beta, Data) %>% mutate(Beta = set_names(Beta, colnames(private$y)),
                                                             Data = set_names(Data, colnames(private$y))) %>%
 
-                             summarise_all(~list(bind_rows(.)))
+                             summarise_all(~list(bind_rows(.))) %>% mutate(Beta = map(Beta, ~mutate(., Marker = colnames(private$x)))) %>%
+                             mutate(Beta = map(Beta , ~gather(., key, value, -Marker)))
 
                           }
                         ))

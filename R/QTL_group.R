@@ -55,15 +55,22 @@ QTLmod_group <- R6Class("QTLmod_group",
                                   as.numeric()
                               })
                           },
-                          sel_cv = function(){
+                          sel_cv = function( s = "lambda.min"){
                             self$cv <-  private$tb %>%
                               mutate(Model = map(Data,
                                                  ~cv_grp_lasso(private$x, .,
                                                                self$group)
                               )) %>%
-                              mutate(Beta = map(Model, ~coef(.,"lambda.min")[-1,]))
-                            browser()
-                            self$reord_beta_cv()
+                              mutate(Beta = map(Model, ~coef(.,s)[-1,])) %>%
+                              mutate(Beta =map(Beta, function(beta){
+                                beta %>% as.data.frame() %>%
+                                  rownames_to_column() %>%
+                                  separate(rowname, c("Trait", "Marker"), "_", extra ="merge") %>%
+                                  spread(Trait ,  ".") %>%
+                                  arrange(match( Marker,colnames(private$x)))
+
+                              }))
+
                           }
                         ))
 
@@ -80,6 +87,16 @@ QTLmod_group_univ <- R6Class("QTLmod_group_univ", inherit = QTLmod_group,
                                    univ_y()
 
 
+                               },
+                               sel_cv = function(s= "lambda.min"){
+                                 super$sel_cv()
+                                 self$cv <- self$cv %>%  mutate(Beta = map2(Beta, Trait, function(x,y){
+                                   x %>% mutate(key = y ) %>% set_names(c("Marker","value","key"))
+                                 }) ) %>%
+                                   select(Data, Beta) %>%
+                                   mutate(Beta = set_names(Beta, colnames(private$y)),
+                                                Data = set_names(Data, colnames(private$y))) %>%
+                                   summarise_all(~list(bind_rows(.)))
                                },
                                reord_beta= function(){
                                  self$res <- self$res %>%
@@ -122,16 +139,10 @@ QTLmod_group_multi <- R6Class("QTLmod_group_multi", inherit = QTLmod_group,
                                     bind_cols(univ_y(private$y), ., inter)
                                 },
 
-                                reord_beta_cv = function(){
+                                sel_cv = function(s ="lambda.min"){
+                                  super$sel_cv(s=s)
                                   self$cv <- self$cv %>%
-                                    mutate(Beta =map(Beta, function(beta){
-                                      beta %>% as.data.frame() %>%
-                                        rownames_to_column() %>%
-                                        separate(rowname, c("Trait", "Marker"), "_", extra ="merge") %>%
-                                        spread(Trait ,  ".") %>%
-                                        arrange(match( Marker,colnames(private$x)))
-
-                                    }))
+                                    mutate(Beta = map(Beta,~gather(.,key, value, -Marker)))
 
                                 }
                               ))

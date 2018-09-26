@@ -45,8 +45,7 @@ QTLmod <- R6Class("QTLmod",
 
 
                     predict = function(){
-                      if(is.null(self$mod))
-                        self$estime()
+                      if(is.null(self$mod))     self$estime()
                       # if(is.null(private$df))
                       #   self$get_df()
                       self $res <- self$res %>%
@@ -62,38 +61,32 @@ QTLmod <- R6Class("QTLmod",
 
 
                     plot_error = function(print = TRUE){
-                      if(is.null(self$res$MSE))
-                        self$predict()
+                      if(is.null(self$res$MSE))   self$predict()
                       MSE <- self$res$MSE %>%
                         map_dfc(function(x) x %>% t() %>%  as.data.frame()) %>%
                         set_names(colnames(private$y)) %>%
                         rowid_to_column() %>%
-                        gather(key, value,-rowid)
+                        gather(key, value,-rowid) %>%
+                        ggplot(data = MSE, aes (x = rowid, color = key, y = value )) +
+                        geom_point() +
+                        geom_line()+
+                        theme_bw()
 
-                     pe <- ggplot(data = MSE, aes (x = rowid, color = key, y = value )) +
-                       geom_point() +
-                       geom_line()+
-                       theme_bw()
-
-                     pe
 
                     },
                     plot_BIC = function(print = TRUE){
-                      if(is.null(self$res$BIC))
-                        self$predict()
+                      if(is.null(self$res$BIC))    self$predict()
 
                      BIC <- self$res$BIC %>%
                         map_dfc(function(x) x %>% t() %>%  as.data.frame()) %>%
                         set_names(colnames(private$y)) %>%
                         rowid_to_column() %>%
-                        gather(key, value,-rowid)
-
-                      pe <- ggplot(data = BIC, aes (x = rowid, color = key, y = value )) +
+                        gather(key, value,-rowid) %>%
+                        ggplot(data = BIC, aes (x = rowid, color = key, y = value )) +
                         geom_point() +
                         geom_line()+
                         theme_bw()
 
-                      pe
 
                     },
                     plot_coef = function(tresh, sel = colnames(private$y)){
@@ -107,15 +100,14 @@ QTLmod <- R6Class("QTLmod",
                       private$tresh <- tresh
                       }
 
-                      private$Data <- private$Data %>%
+                       private$Data %>%
                         filter_at(vars(sel), any_vars(. != 0)) %>%
-                        gather(key, value, -id)
-
-                      pc <- ggplot(data = private$Data, aes( x = id, y = key, fill = value)) +
+                        gather(key, value, -id) %>%
+                        ggplot( aes( x = id, y = key, fill = value)) +
                         scale_fill_viridis() +
                         geom_tile() +
                         theme_bw() + theme(axis.text.x = element_text(angle = 90)) + ylab("") + xlab("")
-                      pc
+
                     },
 
                     ROC = function(b){
@@ -129,7 +121,31 @@ QTLmod <- R6Class("QTLmod",
                           })
 
                     },
-                    plot_anime = function(){
+                    plot_anime = function(name_pos = NULL, num_max = 30){
+                      if (is.null(name_pos)){
+                        name_pos        <- 1:ncol(private$x)
+                                              }
+                      if(is.null(self$res)) self$estime()
+                      self$res %>%
+                        mutate( Beta = map(Beta, ~rowid_to_column(.) %>% gather(key,value, -rowid) %>% as.tibble())) %>%
+                        mutate(Beta = map2(Beta, Trait, ~ mutate(.x, key = as.numeric(gsub("s", "", key)), Trait = .y, pos = name_pos[rowid]))) %>%
+                        select(Beta) %>%
+                        summarise_all(~list(bind_rows(.))) %>% extract2(1) %>% extract2(1) %>% filter( key < num_max & value != 0) %>%
+                        ggplot(aes( x= pos , y = Trait, color = value)) + geom_point() + transition_time(key) + theme_bw() +
+                        scale_color_gradientn(colours = brewer.pal(10,'Spectral'))
+
+
+                    },
+                    plot_cv = function(sel = colnames(private$y), s="lambda.min"){
+                      if(is.null(self$cv)|| private$s != s){ self$sel_cv(s)
+                        private$s <- s
+                        }
+
+                      self$cv %>% select(Beta) %>% extract2(1)%>% extract2(1) %>% filter(value !=0) %>%
+                        ggplot( aes( x = Marker, y = key, fill = value)) +
+                        scale_fill_viridis() +
+                        geom_tile() +
+                        theme_bw() + theme(axis.text.x = element_text(angle = 90)) + ylab("") + xlab("")
 
                     }
                     # estime = function(){

@@ -1,3 +1,18 @@
 # require(tidyverse)
+# require(magrittr)
+# require(gganimate)
+# require(R6)
 # miaou <- QTLmod_group_univ$new(X,Y)
+# miaou$plot_coef()
+# miaou$plot_anime()
 # miaou$sel_cv()
+#
+#  miaou <- QTLmod_group_univ$new(X,Y)
+#  miaou$plot_cv()
+#  miaou <- QTLmod_group_multi_both$new(X,Y)
+#  miaou$plot_cv()
+#
+# miaou <- QTLmod_group_multi_marker$new(X,Y)
+#  miaou$plot_cv()
+#  miaou <- QTLmod_lasso$new(X,Y)
+#  miaou$plot_cv()

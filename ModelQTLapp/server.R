@@ -10,39 +10,56 @@
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
+  
+   X <- reactive({ inFile <- input$X
    
-  # renderPlot <- renderAmCharts
-  output$distPlot <- renderAmCharts({
+   if (is.null(inFile))
+     return(NULL)
+   X <-  read.csv(inFile$datapath, header = input$header, sep = input$sep)
+   })
+   
+   Y <- reactive({
+     inFile <- input$Y
+     
+     if (is.null(inFile))
+       return(NULL)
+     
+     Y <- read.csv(inFile$datapath, header = input$header, sep = input$sep)
+     Y
+   })
+   
+   
+  output$Regressors <- renderDataTable({
+        X()
+  })
+ 
+  
+  output$Responses <- renderDataTable({
+    Y()
+  })
+
+  model <- reactive({
+    input$go
+    isolate({
+      model <- QTLmod_group_univ$new(X(), Y())
+      model$estime()
+      model
+    })
+  })
+  
+  output$Model1 <- renderPlot({
+       if(!input$plot)  return(NULL)
+         
+         model()$plot_coef(input$tresh)
+  })
+  
+  
+  output$CV1 <- renderPlot({
+    if(!input$CV)  return(NULL)
     
-    # generate bins based on input$bins from ui.R
-    x    <- faithful[, input$var] 
-    bins <- round(seq(min(x), max(x), length.out = input$bins + 1), 2)
-    
-    # use amHist
-    amHist(x = x, control_hist = list(breaks = bins), 
-           col = input$color, main = input$titre, 
-           export = TRUE, zoom = TRUE)
+    model()$plot_cv(s =input$t_cv)
   })
   
-  # renderPlot <- renderAmCharts
-  output$boxplot <- renderAmCharts({
-    x <- faithful[, input$var] 
-    amBoxplot(x, col = input$color, main = "Boxplot", export = TRUE, zoom = TRUE)
-  })
-  
-  # summary
-  output$summary <- renderPrint({
-    summary(faithful)
-  })
-  
-  # table
-  output$table <- renderDataTable({
-    faithful
-  })
-  
-  # nombre de classe
-  output$n_bins <- renderText({
-    paste("Nombre de classes : ", input$bins)
-  })
+
   
 })
